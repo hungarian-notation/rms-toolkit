@@ -1,0 +1,118 @@
+
+m4_include([doc.m4])
+
+m4_define([_doc_make_paragraphs_regexp_2], [[\([^$1].*\)]])
+m4_define([_doc_make_paragraphs_regexp_1], [_doc_make_paragraphs_regexp_2(m4_join([], $@))])
+m4_define([_doc_make_paragraphs_regexp], [_doc_make_paragraphs_regexp_1(m4_tab_char, [ ])])
+m4_define([_doc_make_lines_regexp_2],  [[[$1]]])
+m4_define([_doc_make_lines_regexp_1],  [_doc_make_lines_regexp_2(m4_join([], $@))])
+m4_define([_doc_make_lines_regexp],    [_doc_make_lines_regexp_1(m4_newline_char, m4_carriage_return_char)])
+m4_define([_doc_paragraph_fragment_normalize],     [m4_bregexp([$1], _doc_make_paragraphs_regexp(), [[[[\1 ]]]])])
+m4_define([_doc_paragraph_fragment],               [m4_ifblank([$1], [[,]], [_doc_paragraph_fragment_normalize([$1])])])
+m4_define([_doc_paragraphs_normalize_parts],       [m4_map_args([_doc_paragraph_fragment], $1)])
+m4_define([_doc_paragraphs_split_fragments],       [m4_unquote(m4_split([$1], _doc_make_lines_regexp()))])
+m4_define([_doc_paragraphs_process_fragments],     [m4_dquote(m4_do(m4_map_args_sep([_doc_paragraph_fragment(], [)], [,], _doc_paragraphs_split_fragments([$1]))))])
+m4_define([_doc_paragraph_expansion],              [m4_dquote(m4_strip([$1]))])
+
+# _doc_paragraphs_split_fragments(text)
+# ------------------------------------
+# Returns a list of paragraphs in the given text. A paragraph is a group of
+# lines separated from other lines by an empty line.
+m4_define([doc_split_paragraphs],
+[m4_map_sep([_doc_paragraph_expansion], [[,]], _doc_paragraphs_process_fragments([$1]))])
+
+
+m4_define([_doc_line_sep_2], [[$1][$2]])
+
+m4_define([_doc_line_sep], [_doc_line_sep_2([]m4_newline_char()m4_if([$#], [2], [$2], []), [$1])])
+
+m4_define([_doc_join_text],
+[m4_if([$#], [4],
+[[$3]m4_join(_doc_line_sep([$2], [$4]), $1)],
+[[$3]m4_join(_doc_line_sep([$2]), $1)])])
+
+
+
+m4_define([_doc_format_text],
+  [m4_if([$#], [4],
+    [_doc_join_text(doc_split_paragraphs([$1]), [$2], [$3], [$4])],
+    [_doc_join_text(doc_split_paragraphs([$1]), [$2], [$3])])])
+
+m4_define([doc_text],
+  [m4_divert_text([], _doc_format_text([$1], [], [], [m4_newline_char()]))])
+
+# doc_escape(STRING)
+# -----------------
+# Escapes characters that have special meaning in markdown.
+m4_define([doc_escape], [m4_bpatsubst([$1], [_], [\\_])])
+
+m4_define([_doc_format_header],
+  [m4_for([__i__], [1], [$1], [1], [[#]]) $2])
+
+m4_define([__reduce__],
+  [m4_strip(m4_flatten([$1]))])
+
+m4_define([doc_header],
+  [m4_divert_text([], _doc_format_header([$1], [$2]))])
+
+m4_define([doc_title],
+  [doc_header(1, [$1])])
+
+m4_define([doc_chapter],
+  [doc_header(1, [$1])])
+
+m4_define([doc_category],
+  [doc_header(2, `[<]$1[>]` _doc_anchor(m4_default([$2], [$1])))])
+
+m4_define([_doc_anchor], [<a id="$1"></a>])
+
+m4_define([_echo], [m4_errprintn([$1])][$1])
+
+# _doc_syntax("command"|"attribute", name[, args], [ ...statements ])
+# ------------------------------------------------------------------
+m4_define([_doc_syntax],
+  [doc_header(3, **[doc_escape($2)]** m4_ifnblank(
+    [$3], [m4_map_args_w([$3], [*`], [`*], [ ])]) _doc_anchor([$2]))])
+
+m4_define([doc_command],
+  [_doc_syntax(command, $@)])
+
+m4_define([doc_attribute],
+  [_doc_syntax(attribute, $@)])
+
+m4_define([_doc_wrap_params], [[**(**$1**)**]])
+
+m4_define([doc_repeat], [m4_for([__i__], [1], [$2], [1], [$1])])
+
+m4_define([doc_nbsp], [doc_repeat([&nbsp;], [$1])])
+
+m4_define([_doc_opt_argument_info],
+  [][m4_ifnblank([$1], [m4_newline_char()][[]][])])
+
+m4_define([_doc_params], [m4_ifnblank([$1], [m4_newline_char(): ___(default: `$1`)___])])
+
+m4_define([_doc_format_definition], [_doc_format_text([$1],
+  [: ],
+  [: ],
+  [: &nbsp;m4_newline_char()])])
+
+m4_define([_doc_format_quote], [_doc_format_text([$1],
+  [> ],
+  [> ],
+  [])])
+
+m4_define([doc_definition],
+  [m4_divert_text([], _doc_format_definition([$1]))])
+
+m4_define([doc_quote],
+  [m4_divert_text([], _doc_format_quote([$1]))])
+
+m4_define([doc_argument], [m4_divert_text([],
+  `$1` : [$2] m4_newline_char()_doc_format_definition([$4])_doc_params([$3])[]m4_newline_char())])
+
+m4_define([doc_raw], [m4_divert_text([], [$1])])
+
+m4_define([doc_hr],   [doc_raw(m4_newline_char())[]doc_raw([---])])
+m4_define([doc_ref],  [@<:@][m4_if([$#], [1], [`$1`], [$1])][@:>@@{:@@%:@][m4_default([$2], [$1])][@:}@])
+m4_define([doc_link], [@<:@$1@:>@@{:@$2@:}@])
+m4_define([doc_pre],  [definition])

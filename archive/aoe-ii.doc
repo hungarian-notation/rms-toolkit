@@ -1,0 +1,521 @@
+
+#chapter Commands by Category
+
+#category PLAYER_SETUP
+    #syntax command random_placement
+    #syntax command grouped_by_team
+    #syntax command direct_placement
+    #syntax command ai_info_map_type
+  #syntax_params TYPE NOMAD MICHI SHOW_TYPE
+
+        #argument TYPE
+    #argument_type Map Type Constant
+    #argument_default
+    #details
+      One of the predefined map type constants.
+    #end_details
+  #end_argument
+        #argument NOMAD
+    #argument_type doc_pre(0) or doc_pre(1)
+    #argument_default
+    #details
+      Indicates to the Ai whether the map has nomad starts or not.
+    #end_details
+  #end_argument
+        #argument MICHI
+    #argument_type doc_pre(0) or doc_pre(1)
+    #argument_default
+    #details
+      Indicates to the Ai whether the map has michi starts or not.
+    #end_details
+  #end_argument
+        #argument SHOW_TYPE
+    #argument_type doc_pre(0) or doc_pre(1)
+    #argument_default
+    #details
+      When set, the map type will be shown in objectives.
+    #end_details
+  #end_argument
+
+#category LAND_GENERATION
+  #syntax command base_terrain
+  #syntax_params TYPE
+
+    #argument TYPE
+    #argument_type Terrain Constant
+    #argument_default GRASS
+    #details
+      Specifies which terrain to use to initially fill the map.
+    #end_details
+  #end_argument
+
+
+  #syntax command enable_waves
+  #syntax_params ENABLE
+
+    #argument ENABLE
+    #argument_type doc_pre([1]) or doc_pre([0])
+    #argument_default 1
+    #details
+
+      When set to doc_pre(1), the new wave effects will be used.
+
+      This attribute allows map designers to disable waves on maps where
+      they do not match the aesthetic.
+
+    #end_details
+  #end_argument
+
+  #syntax command create_player_lands
+  #syntax_params {...}
+
+    #details
+
+      Creates a land for every player.
+
+      If you do not place player lands, the game will spawn a town
+      center and villagers for them randomly. You will be unable to spawn
+      resources for these randomly placed town centers.
+
+      You may alternatively use the doc_ref(assign_to_player) attribute inside of a
+      doc_ref(create_land) command to create lands for players individually.
+
+    #end_details
+
+  #syntax command create_land
+  #syntax_params {...}
+
+    #details
+
+      Creates a single land.
+
+      The land will be neutral by default, but that
+      can be changed via attributes.
+
+    #end_details
+
+  doc_hr()
+
+  #syntax attribute terrain_type
+  #syntax_params TYPE
+
+    #argument TYPE
+    #argument_type Terrain Constant
+    #argument_default GRASS
+    #details
+
+      Defines the base terrain type to use for this land.
+
+    #end_details
+  #end_argument
+
+  #syntax attribute land_percent
+  #syntax_params %
+
+    #argument %
+    #argument_type Integer Percentage (0..100)
+    #argument_default 100
+    #details
+
+      Defines what percentage of the total map area should be used for this
+      land.
+
+      If used inside of doc_ref(create_player_lands), this percentage is
+      shared among doc_strong(all) player lands.
+
+    #end_details
+  #end_argument
+    #details
+
+      doc_ref(land_percent) and doc_ref(number_of_tiles) are mutually
+      exclusive.
+
+    #end_details
+
+  #syntax attribute number_of_tiles
+  #syntax_params N
+
+    #argument N
+    #argument_type Integer Tile Count
+    #argument_default
+    #details
+
+      Defines a fixed size for the land in tiles.
+
+      If used inside of doc_ref(create_player_lands), each player land will
+      be sized to doc_pre(N) tiles. This is in contrast to doc_pre(land_percent) where
+      player lands *share* the defined area.
+
+    #end_details
+  #end_argument
+    #details
+
+      doc_ref(land_percent) and doc_ref(number_of_tiles) are mutually
+      exclusive.
+
+    #end_details
+
+  #syntax attribute base_size
+  #syntax_params RADIUS
+
+    #argument RADIUS
+    #argument_type Integer Radius
+    #argument_default 0
+    #details
+
+      Defines a minimum radius for the land, counting out from the center
+      tile.
+
+      For example, doc_pre(base_size 3) would define a land that is minimally
+      7x7.
+
+    #end_details
+  #end_argument
+
+  #syntax attribute base_elevation
+    #argument HEIGHT
+    #argument_type Integer Elevation (1..7)
+    #argument_default 0
+    #details
+
+      Defines the base elevation for the land.
+
+      If used, an doc_ref(doc_pre(<ELEVATION_GENERATION>), ELEVATION_GENERATION)
+      section must be present.
+
+    #end_details
+  #end_argument
+
+  #syntax attribute left_border
+  #syntax_params %
+
+    #argument %
+    #argument_type Integer Percentage
+    #argument_default 100
+    #details
+
+      Defines how close to the edge of the map a land can spread.
+
+      Negative values may be useful in conjunction with doc_ref(land_position)
+      to encourage lands to spread closer to the edge of the map. If
+      a negative border is specified and doc_pre(land_position) is not used, the
+      game may crash if the land origin is placed outside of the map.
+
+      doc_strong(Note:) Using this attribute with player lands is buggy in some
+      versions of the game.
+
+    #end_details
+  #end_argument
+
+  #syntax attribute right_border
+  #syntax_params %
+
+    doc_quote(see doc_ref(left_border))
+  #syntax attribute top_border
+  #syntax_params %
+
+    doc_quote(see doc_ref(left_border))
+  #syntax attribute bottom_border
+  #syntax_params %
+
+    doc_quote(see doc_ref(left_border))
+
+  #syntax attribute land_position
+  #syntax_params X% Y%
+
+    #argument [X%, Y%]
+    #argument_type Integer Percentage
+    #argument_default
+    #details
+
+      Defines a fixed origin for the land in terms of a percent of the total
+      width and height of the map.
+
+      As of DE, this attribute may be used in conjunction with
+      doc_ref(assign_to_player) so long as doc_ref(direct_placement) is
+      specified in the doc_pre(<PLAYER_SETUP>) section. This was not possible in
+      previous versions.
+
+    #end_details
+  #end_argument
+
+  #syntax attribute border_fuzziness
+  #syntax_params VALUE
+
+    #argument VALUE
+    #argument_type Integer (0..100)
+    #argument_default 20
+    #details
+
+      Defines how relaxed/strict the borders are for this land. At 0, the
+      borders are ignored. At 100, the land can not exceed its borders at all.
+
+    #end_details
+  #end_argument
+
+  #syntax attribute clumping_factor
+  #syntax_params VALUE
+
+    #argument VALUE
+    #argument_type Integer (-100..99)
+    #argument_default 8
+    #details
+
+      Higher values here will cause lands to prefer to spread to tiles
+      closer to their origin, creating rounder lands.
+
+    #end_details
+  #end_argument
+
+  #syntax attribute zone
+  #syntax_params ID
+
+    #argument ID
+    #argument_type Integer (Any Positive)
+    #argument_default 8
+    #details
+
+      Define an explicit zone for this terrain.
+
+      doc_strong(Note:) Using zone 99 may crash the game.
+
+    #end_details
+  #end_argument
+    #details
+
+      doc_ref(zone), doc_ref(set_zone_randomly), and doc_ref(set_zone_by_team)
+      are mutually exclusive.
+
+    #end_details
+
+  #syntax attribute set_zone_randomly
+    #details
+
+      Define an random zone for this terrain. This is used in maps like
+      Archipelago to allow players to randomly spawn together or apart.
+
+      doc_ref(zone), doc_ref(set_zone_randomly), and doc_ref(set_zone_by_team)
+      are mutually exclusive.
+
+    #end_details
+
+  #syntax attribute set_zone_by_team
+    #details
+
+      Sets a zone for players based on their team. Allies will share the same
+      land.
+
+      doc_ref(zone), doc_ref(set_zone_randomly), and doc_ref(set_zone_by_team)
+      are mutually exclusive.
+
+    #end_details
+
+  #syntax attribute other_zone_avoidance_distance
+  #syntax_params N
+
+    #argument N
+    #argument_type Integer Tile Count
+    #argument_default 0
+    #details
+
+      Defines a minimum distance from lands of other zones.
+
+      This attribute only works if it is declared in both zones. If you give
+      two lands different values, the smaller avoidance distance will be the
+      one that applies
+
+    #end_details
+  #end_argument
+
+  #syntax attribute min_placement_distance
+  #syntax_params N
+
+    #argument N
+    #argument_type Integer Tile Count
+    #argument_default 0
+    #details
+
+      Specifies the minimum distance that a land's origin must be placed
+      away from the origins of other lands.
+
+      Has no effect when used on player lands.
+
+    #end_details
+  #end_argument
+
+  #syntax attribute land_id
+  #syntax_params ID
+
+    #argument ID
+    #argument_type Integer Land Id
+    #argument_default
+    #details
+
+      Specified a land id number that can be used to target this land
+      in the doc_ref(doc_pre(<OBJECTS_GENERATION>), OBJECTS_GENERATION) phase.
+
+      This will not work with lands created via doc_ref(create_player_lands),
+      but it will work with lands that are made into player lands with
+      doc_ref(assign_to_player).
+
+      When multiple lands have the same id, create_object commands will
+      create duplicate objects across all such lands.
+
+    #end_details
+  #end_argument
+
+  #syntax attribute assign_to_player
+  #syntax_params PLAYER
+
+    #argument PLAYER
+    #argument_type Player Number (1..8)
+    #argument_default
+    #details
+
+      Assigns this land to be a player land for the given player.
+
+      If the player is not playing, the land will not be placed. Lands
+      may only be assigned to a single player.
+
+      When used with doc_ref(direct_placement), player lands can be placed in
+      fixed locations with doc_ref(land_position).
+
+    #end_details
+  #end_argument
+
+  #syntax attribute circle_placement
+    #details
+
+      Enables circular placement mode, whereing players are placed in a
+      ring around the outer edge of the map.
+
+      Use with doc_ref(circle_radius) to control the radius of the circle.
+
+      When this attribute is specified, doc_ref(border_fuzziness) can be used
+      to introduce variation in the positioning of player lands.
+
+      doc_strong(Note:) left_border, right_border, bottom_border, top_border do not
+      work when circle_placement is used.
+
+      doc_strong(New in DE.)
+
+      See the doc_link(Forgotten Empires site,
+        https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features)
+      for more information.
+
+    #end_details
+
+  #syntax attribute circle_radius
+  #syntax_params %
+
+    #argument %
+    #argument_type Integer Percent Radius (0..50)
+    #argument_default 0
+    #details
+
+      Represents the distance from the center to player lands placed with
+      doc_ref(circle_placement).
+
+    #end_details
+  #end_argument
+    #details
+
+      doc_strong(New in DE.)
+
+      See the doc_link(Forgotten Empires site,
+        https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features)
+      for more information.
+
+    #end_details
+#category ELEVATION_GENERATION
+doc_quote(TODO)
+
+#category TERRAIN_GENERATION
+
+  #syntax command create_terrain
+  #syntax_params TYPE {...}
+
+
+  #syntax command color_correction
+  #syntax_params TYPE
+
+    #argument TYPE
+    #argument_type Color Correction Constant
+    #argument_default
+    #details
+
+      Sets a specific color correction based on the season.
+
+      Must be one of: doc_pre(CC_DESERT), doc_pre(CC_JUNGLE), doc_pre(CC_AUTUMN), or doc_pre(CC_WINTER).
+
+      doc_strong(New in DE.)
+
+    #end_details
+  #end_argument
+
+
+  #syntax attribute base_terrain
+  #syntax_params TYPE
+
+    #argument TYPE
+    #argument_type Terrain Constant
+    #argument_default GRASS
+    #details
+
+      Defines the terrain type that this terrain should replace.
+
+    #end_details
+  #end_argument
+
+  #syntax attribute land_percent
+  #syntax_params %
+
+
+  #syntax attribute number_of_tiles
+  #syntax_params N
+
+
+  #syntax attribute set_scale_by_size
+
+  #syntax attribute set_scale_by_groups
+
+  #syntax attribute spacing_to_other_terrain_types
+  #syntax_params N
+
+
+  #syntax attribute height_limits
+  #syntax_params LOWEST HIGHEST
+
+
+  #syntax attribute set_flat_terrain_only
+
+  #syntax attribute clumping_factor
+  #syntax_params VALUE
+
+    #argument VALUE
+    #argument_type Integer (-100..99)
+    #argument_default 8
+    #details
+
+      Higher values here will cause clumps to prefer to spread to tiles
+      closer to their origin, creating rounder areas.
+
+    #end_details
+  #end_argument
+
+  #syntax attribute terrain_mask
+  #syntax_params LAYER
+
+    #argument LAYER
+    #argument_type doc_pre(1) (overlay) or doc_pre(2) (underlay)
+    #argument_default
+    #details
+
+      Allows the terrain to be placed as an overlay or underlay of the
+      existing terrain, rather than replacing it entirely. This can create
+      unique visuals that were not possible in previous versions of the game.
+
+      doc_strong(New in DE.)
+
+    #end_details
+  #end_argument

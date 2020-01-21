@@ -1,0 +1,1999 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="./lang.xsl"?>
+<lang>
+
+  <!--
+    <section id="overview" name="Overview">
+      <topic id="overview-basics" name="Basics">
+        <info>
+          <p>
+            Basics.
+          </p>
+        </info>
+      </topic>
+
+      <topic id="overview-basics" name="Basics">
+        <info>
+          <p>
+            Basics.
+          </p>
+        </info>
+      </topic>
+    </section>
+  -->
+
+  <syntax-group id="global_syntax" name="Global Syntax">
+    <info>
+      <p>
+        These macros may be used anywhere in the script. They can be used to alter how the map is generated based on game settings or random chance.
+      </p>
+      <p>
+        Macros are distinct from commands as they are interpreted in a preprocessing step before the commands and attributes are parsed. For instance, the following code exists in my installation under:
+        <code>./.../gamedata_x2/GeneratingObjects.inc</code>
+      </p>
+      <code-block data-lang="rms">
+        if GNR_PALISADING
+          create_object PALISADE_WALL
+        else
+          create_object STONE_WALL
+        endif
+          {
+            set_place_for_every_player
+            min_distance_to_players 35
+            max_distance_to_players 35
+          }
+      </code-block>
+      <p>
+        In this example, the
+        <doc-ref target="if"/>
+        macro construct is used to paste together a single final
+        <doc-ref target="create_object"/>
+        command from parts. The
+        <doc-ref target="create_object"/>
+        command is not read until after the
+        <doc-ref target="if"/>
+        construct is fully resolved.
+      </p>
+      <p>
+        This example results in more readable code than introducing two new const declarations with the ids that
+        <arg-ref name="PALISADE_WALL"/>
+        and
+        <arg-ref name="STONE_WALL"/>
+        already represent.
+      </p>
+    </info>
+
+    <construct id="if_construct">
+      <name>Conditional Construct</name>
+      <info>
+        <p>
+          Used to introduce conditions into your map script. These conditions can be based on game settings or previous
+          <doc-ref target="#define"/>
+          statements included in your script.
+        </p>
+        <p>
+          The following example uses two if-constructs to make the size and terrain of a central lake adapt to the game settings.
+        </p>
+        <ul>
+          <li>
+            If the map is huge or larger, the lake will generate with twice as many tiles.
+          </li>
+          <li>
+            If the game mode is King of the Hill, the lake will be shallows instead of water to allow access to the monument.
+          </li>
+        </ul>
+        <code-block data-lang="rms">
+          if HUGE_MAP
+            #define LARGE_LAKE
+          elseif GIGANTIC_MAP
+            #define LARGE_LAKE
+          elseif LUDIKRIS_MAP
+            #define LARGE_LAKE
+          else
+            /* default: NORMAL_LAKE */
+          endif
+
+          create_land {
+            if LARGE_LAKE
+              number_of_tiles 3000
+            else
+              number_of_tiles 1500
+            endif
+
+            base_size 9
+            clumping_factor 99
+            land_position 50 50
+
+            if KING_OT_HILL
+              terrain_type SHALLOW
+            else
+              terrain_type WATER
+            endif
+          }
+        </code-block>
+        <p>
+          A "not" can be implemented with an if-else where you leave the if clause empty:
+        </p>
+        <code-block data-lang="rms">
+          if KING_OT_HILL
+          else
+            /*
+              This land is only created if the game mode is
+              NOT King of the hill.
+            */
+            create_land
+            {
+              ...
+            }
+          endif
+        </code-block>
+      </info>
+    </construct>
+
+    <construct id="random_construct">
+      <name>Random Construct</name>
+      <info>
+        <p>
+          Used to introduce randomly varying features into your map. This could be used to adjust what types of terrain generate to simulate seasons, or to enable or disable the generation of entire features.
+        </p>
+        <p>
+          The following example is used to generate a random number of relics so that the players will not know exactly how many are present on the map.
+        </p>
+        <code-block>
+          create_object RELIC
+          {
+            terrain_to_place_on GRASS
+            temp_min_distance_group_placement 30
+            start_random
+              percent_chance 25
+                number_of_objects 2
+              percent_chance 25
+                number_of_objects 3
+              percent_chance 25
+                number_of_objects 4
+              percent_chance 25
+                number_of_objects 5
+            end_random
+          }
+        </code-block>
+        <p>
+          If percents don't add up to 100, the difference is the percent chance that none of the other options happen.
+        </p>
+        <p>
+          Starting in Defninitive Edition, this useage of this construct can be replaced with the following shorthand:
+        </p>
+        <code-block>
+          create_object RELIC
+          {
+            terrain_to_place_on GRASS
+            temp_min_distance_group_placement 30
+            number_of_objects rnd(2, 5)
+          }
+        </code-block>
+        <p>
+          While this is useful, there are still many use-cases of the old random construct style that can not be replaced with the new macro.
+        </p>
+      </info>
+    </construct>
+
+    <syntax type="macro">
+      <name>#define</name>
+      <argument>
+        <name>NAME</name>
+        <type name="Name" domain="Definition"/>
+      </argument>
+    </syntax>
+
+    <syntax type="macro">
+      <name>#undefine</name>
+      <argument>
+        <name>NAME</name>
+        <type name="Name" domain="Definition"/>
+      </argument>
+      <info>
+        <p>
+          While a string exists for this macro in the game's data, it is not clear how or if it works. This is likely intended to reverse the effect of a
+          <doc-ref target="#define"/>
+          macro, but it does not appear to function.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="macro">
+      <name>#const</name>
+      <argument>
+        <name>NAME</name>
+        <type name="Name" domain="Constant"/>
+      </argument>
+
+      <argument>
+        <name>ID</name>
+        <type name="Integer"/>
+        <info>
+          <p>
+            The numerical Id of the terrain or object you are giving name to.
+          </p>
+        </info>
+      </argument>
+      <info>
+        <p>
+          While the same Id can be assigned to multiple constant names, any given constant name can only be defined once. Any future definition will be ignored.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="macro">
+      <name>#include</name>
+      <argument>
+        <name>NAME</name>
+        <type name="File" domain="Builtin"/>
+      </argument>
+      <info>
+        <p>
+          This is used in built in map scripts to copy instructions from other files. It can not be used in custom random map scripts.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="macro">
+      <name>#include_drs</name>
+      <argument>
+        <name>NAME</name>
+        <type name="File" domain="Builtin"/>
+      </argument>
+
+      <argument>
+        <name>ID</name>
+        <type name="Integer"/>
+        <info>
+          <p>
+            This appears to refer to the target resource/file name's entry in the strings table, but it is not always used.
+          </p>
+        </info>
+      </argument>
+      <info>
+        <p>
+          This is used in built in map scripts to copy instructions from other files. It can not be used in custom random map scripts.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="macro">
+      <name>if</name>
+      <argument>
+        <name>NAME</name>
+        <type name="Name" domain="Definition"/>
+      </argument>
+      <see target="if_construct">Conditional Construct</see>
+    </syntax>
+
+    <syntax type="macro">
+      <name>elseif</name>
+      <argument>
+        <name>NAME</name>
+        <type name="Name" domain="Definition"/>
+      </argument>
+      <see target="if_construct">Conditional Construct</see>
+    </syntax>
+
+    <syntax type="macro">
+      <name>else</name>
+      <see target="if_construct">Conditional Construct</see>
+    </syntax>
+
+    <syntax type="macro">
+      <name>endif</name>
+      <see target="if_construct">Conditional Construct</see>
+    </syntax>
+
+    <syntax type="macro">
+      <name>start_random</name>
+      <see target="random_construct">Random Construct</see>
+    </syntax>
+
+    <syntax type="macro">
+      <name>end_random</name>
+      <see target="random_construct">Random Construct</see>
+    </syntax>
+
+    <syntax type="macro">
+      <name>percent_chance</name>
+      <argument>
+        <name>CHANCE</name>
+        <type name="Integer"/>
+      </argument>
+      <see target="random_construct">Random Construct</see>
+    </syntax>
+
+    <syntax type="macro">
+      <name>rnd()</name>
+      <see target="random_construct">Random Construct</see>
+      <note class="new"/>
+    </syntax>
+  </syntax-group>
+
+  <syntax-group id="setup" section="PLAYER_SETUP">
+    <syntax type="command">
+      <name>random_placement</name>
+      <info>
+        <p>
+          Players will be positioned randomly.
+        </p>
+      </info>
+      <exclude target="grouped_by_team"/>
+      <exclude target="direct_placement"/>
+    </syntax>
+
+    <syntax type="command">
+      <name>grouped_by_team</name>
+      <info>
+        <p>
+          Players will be positioned in close proximity to their teammates.
+        </p>
+      </info>
+      <exclude target="random_placement"/>
+      <exclude target="direct_placement"/>
+    </syntax>
+
+    <syntax type="command">
+      <name>direct_placement</name>
+      <note class="new"/>
+      <info>
+        <p>Players must be assigned to positioned lands using
+          <doc-ref target="assign_to_player"/>
+          and
+          <doc-ref target="land_position"/>.
+        </p>
+      </info>
+      <exclude target="random_placement"/>
+      <exclude target="grouped_by_team"/>
+    </syntax>
+
+    <syntax type="command">
+      <name>nomad_resources</name>
+      <info>
+        <p>
+          Adds the cost of a town center to all players' starting resources.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="command">
+      <name>ai_info_map_type</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Map Type"/>
+        <info>
+          <p>One of the predefined map type constants.</p>
+        </info>
+      </argument>
+
+      <argument>
+        <name>NOMAD</name>
+        <type name="Boolean" min="0" max="1"/>
+        <info>
+          <p>Indicates to the Ai whether the map has nomad starts or not.</p>
+        </info>
+      </argument>
+
+      <argument>
+        <name>MICHI</name>
+        <type name="Boolean" min="0" max="1"/>
+        <info>
+          <p>Indicates to the Ai whether the map has michi starts or not.</p>
+        </info>
+      </argument>
+
+      <argument>
+        <name>SHOW_TYPE</name>
+        <type name="Boolean" min="0" max="1"/>
+        <info>
+          <p>When set, the map type will be shown in objectives.</p>
+        </info>
+      </argument>
+    </syntax>
+  </syntax-group>
+
+  <syntax-group id="land" section="LAND_GENERATION">
+    <syntax type="command">
+      <name>base_terrain</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Terrain"/>
+        <default>GRASS</default>
+        <info>
+          <p>Specifies which terrain to use to initially fill the map.</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="command">
+      <name>enable_waves</name>
+      <note class="new"/>
+      <argument>
+        <name>ENABLE</name>
+        <type name="Boolean" min="0" max="1"/>
+        <default>1</default>
+        <info>
+          <p>When set to
+            <arg-ref name="1"/>, the new wave effects will be used.</p>
+          <p>This attribute allows map designers to disable waves on maps where they do not match the aesthetic.</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="command">
+      <name>create_player_lands</name>
+      <argument>
+        <name>{...}</name>
+        <type name="Attributes"/>
+      </argument>
+      <info>
+        <p>Creates a land for every player.</p>
+        <p>If you do not place player lands, the game will spawn a town center and villagers for them randomly. You will be unable to spawn resources for these randomly placed town centers.
+        </p>
+        <p>You may alternatively use the
+          <doc-ref target="assign_to_player"/>
+          attribute inside of a
+          <doc-ref target="create_land"/>
+          command to create lands for players individually.</p>
+      </info>
+    </syntax>
+
+    <syntax type="command">
+      <name>create_land</name>
+      <argument>
+        <name>{...}</name>
+        <type name="Attributes"/>
+      </argument>
+      <info>
+        <p>Creates a single land.</p>
+        <p>The land will be neutral by default, but that can be changed via attributes.</p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>terrain_type</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Terrain"/>
+        <default>GRASS</default>
+        <info>
+          <p>Defines the base terrain type to use for this land.</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>land_percent</name>
+      <argument>
+        <name>%</name>
+        <type name="Integer" domain="Percentage" min="0" max="100"/>
+        <default>100</default>
+        <info>
+          <p>Defines what percentage of the total map area should be used for this land.</p>
+          <p>If used inside of
+            <doc-ref target="land/create_player_lands" name="create_player_lands"/>, this percentage is shared among
+            <b>all</b>
+            player lands.</p>
+        </info>
+      </argument>
+      <exclude target="number_of_tiles"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>number_of_tiles</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Tile Count"/>
+        <info>
+          <p>Defines a fixed size for the land in tiles.</p>
+          <p>If used inside of
+            <doc-ref target="create_player_lands"/>, each player land will be sized to
+            <arg-ref name="N"/>
+            tiles. This is in contrast to
+            <doc-ref target="land_percent"/>
+            where player lands *share* the defined area.</p>
+        </info>
+      </argument>
+      <exclude target="land_percent"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>base_size</name>
+      <argument>
+        <name>RADIUS</name>
+        <type name="Integer" domain="Radius"/>
+        <default>0</default>
+        <info>
+          <p>Defines a minimum radius for the land, counting out from the center tile.</p>
+          <p>For example,
+            <code>base_size 3</code>
+            would define a land that is minimally 7x7.</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>base_elevation</name>
+      <argument>
+        <name>HEIGHT</name>
+        <type name="Integer" domain="Elevation" min="1" max="7"/>
+        <default>0</default>
+        <info>
+          <p>Defines the base elevation for the land.</p>
+          <p>If used, an
+            <doc-ref target="ELEVATION_GENERATION"/>
+            section must be present.</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>left_border</name>
+      <argument>
+        <name>%</name>
+        <type name="Integer" domain="Percentage"/>
+        <default>100</default>
+        <info>
+          <p>Defines how close to the edge of the map a land can spread.</p>
+          <p>Negative values may be useful in conjunction with
+            <doc-ref target="land_position"/>
+            to encourage lands to spread closer to the edge of the map. If a negative border is specified and
+            <doc-ref target="land_position"/>
+            is not used, the game may crash if the land origin is placed outside of the map.</p>
+          <p>
+            <b>Note:</b>
+            Using this attribute with player lands is buggy in some versions of the game.</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>right_border</name>
+      <see>left_border</see>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>top_border</name>
+      <see>left_border</see>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>bottom_border</name>
+      <see>left_border</see>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>land_position</name>
+      <argument>
+        <name>X%</name>
+        <type name="Integer" domain="Percentage" min="1" max="99"/>
+      </argument>
+      <argument>
+        <name>Y%</name>
+        <type name="Integer" domain="Percentage" min="1" max="99"/>
+      </argument>
+      <info>
+        <p>Defines a fixed origin for the land in terms of a percent of the total width and height of the map.</p>
+        <p>As of DE, this attribute may be used in conjunction with
+          <doc-ref target="assign_to_player"/>
+          so long as
+          <doc-ref target="direct_placement"/>
+          is specified in the
+          <code>&lt;PLAYER_SETUP&gt;</code>
+          section. This was not possible in previous versions.</p>
+      </info>
+      <note class="critical">
+        Placing lands outside of the map will crash the game.
+      </note>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>border_fuzziness</name>
+      <argument>
+        <name>VALUE</name>
+        <type name="Integer" min="0" max="100"/>
+        <default>20</default>
+        <info>
+          <p>Defines how relaxed/strict the borders are for this land. At 0, the borders are ignored. At 100, the land can not exceed its borders at all.</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>clumping_factor</name>
+      <argument>
+        <name>VALUE</name>
+        <type name="Integer" min="-99" max="99"/>
+        <default>8</default>
+        <info>
+          <p>
+            Higher values here will cause lands to prefer to spread to tiles
+            closer to their origin, creating rounder lands.
+          </p>
+          <p>
+            Think of this value as a rating of how much the algorithm should
+            prefer to spread onto a tile close to the origin of the land.
+            Giving a negative value will encourage the algorithm to <i>avoid</i>
+            tiles near the land's origin, creating snake-like lands.
+          </p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>zone</name>
+      <argument>
+        <name>ID</name>
+        <type name="Integer" min="1" domain="Zone"/>
+        <info>
+          <p>Define an explicit zone for this terrain.</p>
+          <p><b>Note:</b> Using zone 99 may crash the game.</p>
+        </info>
+      </argument>
+      <exclude target="set_zone_randomly"/>
+      <exclude target="set_zone_by_team"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_zone_randomly</name>
+      <info>
+        <p>Define an random zone for this terrain. This is used in maps like Archipelago to allow players to randomly spawn together or apart.</p>
+      </info>
+      <exclude target="zone"/>
+      <exclude target="set_zone_by_team"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_zone_by_team</name>
+      <info>
+        <p>Sets a zone for players based on their team. Allies will share the same land.</p>
+      </info>
+      <exclude target="zone"/>
+      <exclude target="set_zone_randomly"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>other_zone_avoidance_distance</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Tile Count"/>
+        <default>0</default>
+        <info>
+          <p>Defines a minimum distance from lands of other zones.</p>
+          <p>This attribute only works if it is declared in both zones. If you give two lands different values, the smaller avoidance distance will be the one that applies</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>min_placement_distance</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Tile Count"/>
+        <default>0</default>
+        <info>
+          <p>Specifies the minimum distance that a land&apos;s origin must be placed away from the origins of other lands.</p>
+          <p>Has no effect when used on player lands.</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>land_id</name>
+      <argument>
+        <name>ID</name>
+        <type name="Integer" domain="Land ID"/>
+        <info>
+          <p>Specified a land id number that can be used to target this land in the
+            <doc-ref target="OBJECTS_GENERATION"/>
+            phase.</p>
+          <p>This will not work with lands created via
+            <doc-ref target="create_player_lands"/>, but it will work with lands that are made into player lands with
+            <doc-ref target="assign_to_player"/>.</p>
+          <p>When multiple lands have the same id, create_object commands will create duplicate objects across all such lands.</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>assign_to_player</name>
+      <argument>
+        <name>PLAYER</name>
+        <type name="Integer" domain="Player Number" min="1" max="8"/>
+        <info>
+          <p>Assigns this land to be a player land for the given player. If the player is not playing, the land will not be placed. Lands may only be assigned to a single player.</p>
+          <p>When used with
+            <doc-ref target="direct_placement"/>, player lands can be placed in fixed locations with
+            <doc-ref target="land_position"/>.</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>circle_placement</name>
+      <info>
+        <p>Enables circular placement mode, whereing players are placed in a ring around the outer edge of the map.</p>
+        <p>Use with
+          <doc-ref target="circle_radius"/>
+          to control the radius of the circle.</p>
+        <p>When this attribute is specified,
+          <doc-ref target="border_fuzziness"/>
+          can be used to introduce variation in the positioning of player lands.</p>
+        <p>
+          <b>Note:</b>
+          left_border, right_border, bottom_border, top_border do not work when circle_placement is used.</p>
+      </info>
+      <note class="new"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>circle_radius</name>
+      <note class="new"/>
+      <argument>
+        <name>%</name>
+        <type name="Integer" domain="Percent Radius" min="0" max="50"/>
+        <default>0</default>
+        <info>
+          <p>Represents the distance from the center to player lands placed with
+            <doc-ref target="circle_placement"/>.</p>
+        </info>
+      </argument>
+    </syntax>
+  </syntax-group>
+
+  <syntax-group id="elevation" section="ELEVATION_GENERATION">
+    <syntax type="command">
+      <name>create_elevation</name>
+      <argument>
+        <name>MAX</name>
+        <type name="Integer" domain="Elevation" min="1" max="7"/>
+        <info>
+          <p>The max elevation to be generated by this command.</p>
+        </info>
+      </argument>
+
+      <argument>
+        <name>{...}</name>
+        <type name="Attributes"/>
+      </argument>
+      <info>
+        <p>
+          Hills may not reach
+          <arg-ref name="MAX"/>
+          if their base is too small to support it.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>base_terrain
+      </name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Terrain"/>
+        <info>
+          <p>
+            Specifies which terrain hills can grow on.
+          </p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>number_of_tiles</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Tile Count"/>
+        <info>
+          <p>
+            The total number of tiles to share between all hills generated by this command.
+          </p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>number_of_clumps</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer"/>
+        <info>
+          <p>
+            The maximum number of discrete hills to generate.
+          </p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_scale_by_size</name>
+
+      <info>
+        <p>
+          scales <a href="#elevation_generation-number_of_tiles">number_of_tiles</a>
+          by the
+          <a href="#concepts-map_size">map size</a>
+          scaling factor.
+        </p>
+      </info>
+      <see target="map_size">Map Size</see>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_scale_by_groups</name>
+      <info>
+        <p>
+          scales <a href="#elevation_generation-number_of_clumps">number_of_clumps</a>
+          by the
+          <a href="#concepts-map_size">map size</a>
+          scaling factor.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>spacing</name>
+      <argument>
+        <name>N</name>
+        <default>1</default>
+        <info>
+          <p>Defines the spacing between elevation levels in tiles.</p>
+        </info>
+      </argument>
+    </syntax>
+  </syntax-group>
+
+  <syntax-group id="cliff" section="CLIFF_GENERATION">
+    <info>
+      <p>
+        Random map scripts are given very little control over the generation
+        of cliffs. The commands described below apply to all cliffs for the
+        generated map.
+      </p>
+      <p>
+        Cliffs can not be defined by land or by terrain. They will always
+        avoid the center of a land, player or otherwise. This behavior can
+        not be disabled or modified.
+      </p>
+      <p>
+        Including a <code>&lt;CLIFF_GENERATION&gt;</code> section with no
+        commands will generate cliffs according to the command defaults.
+      </p>
+    </info>
+
+    <syntax type="command">
+      <name>min_number_of_cliffs</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer"/>
+        <default>3</default>
+      </argument>
+    </syntax>
+
+    <syntax type="command">
+      <name>max_number_of_cliffs</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer"/>
+        <default>8</default>
+      </argument>
+    </syntax>
+
+    <syntax type="command">
+      <name>min_length_of_cliff</name>
+      <argument>
+        <name>N</name>
+        <info>
+          Note that length is given in cliff sections, not tiles.
+        </info>
+        <type name="Integer" domain="Cliff Sections"/>
+        <default>5</default>
+      </argument>
+    </syntax>
+
+    <syntax type="command">
+      <name>max_length_of_cliff</name>
+      <argument>
+        <name>N</name>
+        <info>
+          Note that length is given in cliff sections, not tiles.
+        </info>
+        <type name="Integer" domain="Cliff Sections"/>
+        <default>9</default>
+      </argument>
+    </syntax>
+
+    <syntax type="command">
+      <name>cliff_curliness</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer"/>
+      </argument>
+    </syntax>
+
+    <syntax type="command">
+      <name>min_distance_cliffs</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Distance"/>
+      </argument>
+    </syntax>
+
+    <syntax type="command">
+      <name>min_terrain_distance</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Distance"/>
+      </argument>
+    </syntax>
+  </syntax-group>
+
+  <syntax-group id="terrain" section="TERRAIN_GENERATION">
+    <syntax type="command">
+      <name>create_terrain</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Terrain"/>
+        <info>
+          <p>Defines the terrain type that will be created.</p>
+        </info>
+      </argument>
+      <argument>
+        <name>{...}</name>
+        <type name="Attributes"/>
+      </argument>
+    </syntax>
+
+    <syntax type="command">
+      <name>color_correction</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Color Correction"/>
+        <info>
+          <p>Sets a specific color correction based on the season. Must be one of:
+            <code>CC_DESERT</code>,
+            <code>CC_JUNGLE</code>,
+            <code>CC_AUTUMN</code>, or
+            <code>CC_WINTER</code>.</p>
+        </info>
+      </argument>
+      <note class="new"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>base_terrain</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Terrain"/>
+        <default>GRASS</default>
+        <info>
+          <p>Defines the terrain type that this terrain should replace.</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>land_percent</name>
+      <type name="Integer" domain="Percentage"/>
+      <exclude target="number_of_tiles"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <info>
+        <p>
+          When neither <doc-ref target="number_of_tiles"/> nor <doc-ref target="land_percent"/>
+          are defined, <doc-ref target="number_of_tiles"/> is assumed using the default
+          tile count.
+        </p>
+      </info>
+      <name>number_of_tiles</name>
+      <default>150</default>
+      <exclude target="land_percent"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>number_of_clumps</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer"/>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_scale_by_size</name>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_scale_by_groups</name>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>spacing_to_other_terrain_types</name>
+      <argument>
+        <name>N</name>
+        <default>0</default>
+        <type name="Integer" domain="Tile Count"/>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_avoid_player_start_areas</name>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>height_limits</name>
+      <argument>
+        <name>MIN</name>
+        <default>0</default>
+        <type name="Integer" min="0" max="7" domain="Elevation"/>
+      </argument>
+      <argument>
+        <name>MAX</name>
+        <default>0</default>
+        <type name="Integer" min="0" max="7" domain="Elevation"/>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_flat_terrain_only</name>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>clumping_factor</name>
+      <argument>
+        <name>PERCENT</name>
+        <type name="Integer" min="-100" max="99"/>
+        <default>8</default>
+        <info>
+          <p>Higher values here will cause clumps to prefer to spread to tiles closer to their origin, creating rounder areas.</p>
+        </info>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>terrain_mask</name>
+      <note class="new"/>
+      <argument>
+        <name>LAYER</name>
+        <type name="Integer" domain="Terrain Layer" min="1" max="2"/>
+        <info>
+          <p>Allows the terrain to be placed as an overlay or underlay of the existing terrain, rather than replacing it entirely. This can create unique visuals that were not possible in previous versions of the game.</p>
+        </info>
+      </argument>
+    </syntax>
+  </syntax-group>
+
+  <syntax-group id="connection" section="CONNECTION_GENERATION">
+    <syntax type="command">
+      <name>create_connect_all_lands</name>
+      <argument>
+        <name>{...}</name>
+        <type name="Attributes"/>
+      </argument>
+      <info>
+        <p>Connections will be routed between the origins of all lands.</p>
+        <p>This common example ensures all lands are connected by shallows.</p>
+        <code-block data-lang="rms">
+          create_connect_all_lands
+          {
+            replace_terrain WATER SHALLOW
+            terrain_size    WATER 5 2
+          }
+        </code-block>
+      </info>
+    </syntax>
+
+    <syntax type="command">
+      <name>create_connect_all_players_land</name>
+      <argument>
+        <name>{...}</name>
+        <type name="Attributes"/>
+      </argument>
+      <info>
+        <p>Connections will be routed between the origins of all player lands.</p>
+      </info>
+    </syntax>
+
+    <syntax type="command">
+      <name>create_connect_teams_lands</name>
+      <argument>
+        <name>{...}</name>
+        <type name="Attributes"/>
+      </argument>
+      <info>
+        Connections will be routed between the origins of player lands and the
+        lands of their teammates.
+      </info>
+    </syntax>
+
+    <syntax type="command">
+      <name>create_connect_same_land_zones</name>
+      <argument>
+        <name>{...}</name>
+        <type name="Attributes"/>
+      </argument>
+      <info>
+        <p>
+          This command is undocumented and appears to function the same as
+          <doc-ref target="create_connect_all_lands"/>.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="command">
+      <name>create_connect_to_nonplayer_land</name>
+      <argument>
+        <name>{...}</name>
+        <type name="Attributes"/>
+      </argument>
+      <info>
+        Connections will be routed from each player land to all non-player
+        lands. If there is a single central non-player land, this allows the
+        creation of a spoked hub.
+      </info>
+      <note class='new'/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>replace_terrain</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Terrain"/>
+        <info>The terrain to replace.</info>
+      </argument>
+      <argument>
+        <name>REPLACEMENT_TYPE</name>
+        <type name="Constant" domain="Terrain"/>
+        <info>The terrain to replace it with.</info>
+      </argument>
+      <info>
+        <p>
+          Defines a terrain replacement to use while routing a connection. This
+          attribute may be used multiple times in a given command to define
+          multiple replacement relationships.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>default_terrain_replacement</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Terrain"/>
+      </argument>
+      <info>
+        <p>
+          When specified, any terrain that does not have an explicit
+          <doc-ref target="replace_terrain"/> attribute will be replaced with the
+          terrain given here.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>terrain_cost</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Terrain"/>
+      </argument>
+      <argument>
+        <name>COST</name>
+        <type name="Integer" min="1" max="15"/>
+        <default>1</default>
+        <info>
+          <p>The cost of routing a connection through terrain of type <arg-ref index="1"/>.</p>
+        </info>
+      </argument>
+      <info>
+        <p>
+          This attribute may be used multiple times in a given command.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>terrain_size</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Terrain"/>
+        <info>
+          The terrain being replaced.
+        </info>
+      </argument>
+      <argument>
+        <name>WIDTH</name>
+        <type name="Integer" min="0" domain="Tiles"/>
+      </argument>
+      <argument>
+        <name>VARIANCE</name>
+        <type name="Integer" min="0" domain="Tiles"/>
+      </argument>
+      <info>
+        <p>Defines the width of the path through terrain of the given type. If
+        <arg-ref index="3"/> is greater or equal to <arg-ref index="2"/> the
+        path may be broken when its size hits zero.</p>
+      </info>
+    </syntax>
+  </syntax-group>
+
+  <syntax-group id="objects" section="OBJECTS_GENERATION">
+    <syntax type="command">
+      <name>create_object</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Object"/>
+      </argument>
+
+      <argument>
+        <name>{...}</name>
+        <type name="Attributes"/>
+      </argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>number_of_objects</name>
+      <argument>
+        <name>COUNT</name>
+        <type name="Integer"/>
+        <default>1</default>
+        <info>
+          <p>
+            When creating the VILLAGER object, the default changes to the correct number of starting villagers for that civilization.
+          </p>
+        </info>
+      </argument>
+      <info>
+        <p>
+          Sets the number of objects to generate, or the number of objects in each group if
+          <doc-ref target="number_of_groups"/>
+          is not 1.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>number_of_groups</name>
+      <argument><name>N</name></argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>group_variance</name>
+      <argument><name>N</name></argument>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_scaling_to_map_size</name>
+      <exclude target="set_scaling_to_player_number"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_scaling_to_player_number</name>
+      <exclude target="set_scaling_to_map_size"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_place_for_every_player</name>
+      <exclude target="place_on_specific_land_id"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_gaia_object_only</name>
+      <info>
+        <p>
+          When specified, objects placed with <doc-ref target="set_place_for_every_player"/>
+          will be assigned to the gaia faction.
+        </p>
+        <p>
+          This attribute is required for most resource objects.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>terrain_to_place_on</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Terrain"/>
+      </argument>
+      <info>
+        Specifies which single type of terrain the objects may be placed on.
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>min_distance_to_players</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Tiles"/>
+      </argument>
+      <info>
+        <p>
+          When <doc-ref target="set_place_for_every_player"/> is specified, this
+          constraint applies only to the player the object is placed for.
+        </p>
+        <p>
+          When <doc-ref target="set_place_for_every_player"/> is not specified, this
+          constraint applies to the origin of all lands, not just player lands.
+        </p>
+        <p>
+          When <doc-ref target="place_on_specific_land_id"/> is specified, this
+          constraint applies to the distance to that land's origin.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>max_distance_to_players</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Tiles"/>
+      </argument>
+      <info>
+        <p>
+          When <doc-ref target="set_place_for_every_player"/> is specified, this
+          constraint applies to the player the object is placed for.
+        </p>
+        <p>
+          When <doc-ref target="place_on_specific_land_id"/> is specified, this
+          constraint applies to the distance to that land's origin.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>max_distance_to_other_zones</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Tiles"/>
+      </argument>
+      <info>
+        <p>Contrary to what its name implies, this attribute specifies a
+        <strong>minimum</strong> distance to the edge of the zone the object
+        is placed in.</p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>min_distance_group_placement</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Tiles"/>
+      </argument>
+      <info>
+        <p>
+          Constrains the placement of this and all future objects so that
+          no object (or no origin of a group of objects) will exist within
+          <arg-ref name="N"/> tiles of this object.
+        </p>
+        <p>
+          Higher values tend to place hard constraints on the spawning of other
+          objects.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>temp_min_distance_group_placement</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Tiles"/>
+      </argument>
+      <info>
+        <p>
+          Constrains the placement of objects for this command only so that
+          no two objects (or groups of objects) are placed within <arg-ref name="N"/>
+          tiles of eachother.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>group_placement_radius</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Tiles"/>
+        <default>3</default>
+      </argument>
+      <info>
+        <p>
+          Defines the radius from the origin of a group of objects in which
+          objects can be placed.
+        </p>
+        <p>
+          The radius does not include the origin tile, so a radius of 3 defines
+          a 7x7 square region.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_tight_grouping</name>
+      <exclude target="set_loose_grouping"/>
+      <info>
+        When specified, objects in a group will be generated without any space
+        in between them.
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>set_loose_grouping</name>
+      <exclude target="set_tight_grouping"/>
+      <info>
+        <p>
+          When specified, objects in a group may have space in between them.
+        </p>
+        <p>
+          This attribute is the default in the absence of a
+          <doc-ref target="set_tight_grouping"/> attribute, so it may be omitted.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>place_on_specific_land_id</name>
+      <note class='new'/>
+      <argument>
+        <name>LAND_ID</name>
+        <type name="Integer" domain="Land ID"/>
+      </argument>
+      <info>
+        <p>
+          Causes the object to be placed on the specified land.
+        </p>
+      </info>
+      <exclude target="set_place_for_every_player"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>resource_delta</name>
+      <note class='new'/>
+      <argument>
+        <name>+-AMOUNT</name>
+        <type name="Integer" domain="with Sign"/>
+      </argument>
+      <info>
+        <p>
+          Causes an object to contain more or less of a collectable resource.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>second_object</name>
+      <note class='new'/>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Object"/>
+      </argument>
+      <info>
+        <p>
+          Causes a second object to be placed at the same location. This is used by built-in scripts to place farms under villagers.
+        </p>
+        <p>
+          This has some limited use in composing eye candy objects, but is otherwise mostly useless.
+        </p>
+        <p>
+          This new attribute was announced and documented on the
+          <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
+            Forgotten Empires website</a>.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>place_on_forest_zone</name>
+      <note class='new'/>
+      <info>
+        <p>
+          This new attribute was announced and documented on the
+          <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
+            Forgotten Empires website</a>.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>avoid_forest_zone</name>
+      <note class='new'/>
+      <info>
+        <p>
+          This new attribute was announced and documented on the
+          <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
+            Forgotten Empires website</a>.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>find_closest</name>
+      <note class='new'/>
+      <info>
+        <p>
+          This new attribute was announced and documented on the
+          <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
+            Forgotten Empires website</a>.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>actor_area</name>
+      <note class='new'/>
+      <argument>
+        <name>ID</name>
+        <type name="Integer" domain="Actor Area ID"/>
+      </argument>
+      <info>
+        <p>
+          This new attribute was announced and documented on the
+          <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
+            Forgotten Empires website</a>.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>actor_area_radius</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Radius"/>
+      </argument>
+      <note class='new'/>
+      <info>
+        <p>
+          This new attribute was announced and documented on the
+          <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
+            Forgotten Empires website</a>.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>actor_area_to_place_in</name>
+      <argument>
+        <name>ID</name>
+        <type name="Integer" domain="Actor Area ID"/>
+      </argument>
+      <note class='new'/>
+      <info>
+        <p>
+          This new attribute was announced and documented on the
+          <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
+            Forgotten Empires website</a>.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>avoid_actor_area</name>
+      <argument>
+        <name>ID</name>
+        <type name="Integer" domain="Actor Area ID"/>
+      </argument>
+      <note class='new'/>
+      <info>
+        <p>
+          This new attribute was announced and documented on the
+          <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
+            Forgotten Empires website</a>.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>avoid_all_actor_areas</name>
+      <note class='new'/>
+      <info>
+        <p>
+          This new attribute was announced and documented on the
+          <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
+            Forgotten Empires website</a>.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>layer_to_place_on</name>
+      <argument>
+        <name>LAYER</name>
+        <type name="Integer" domain="Terrain Layer" min="1" max="2"/>
+      </argument>
+      <note class='new'/>
+      <info>
+        <p>
+          This new attribute was announced and documented on the
+          <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
+            Forgotten Empires website</a>.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>force_placement</name>
+      <note class='new'/>
+      <info>
+        <p>
+          This new attribute was announced and documented on the
+          <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
+            Forgotten Empires website</a>.
+        </p>
+      </info>
+    </syntax>
+  </syntax-group>
+
+  <section id="concepts" name="Concepts">
+    <topic id="map_size" name="Map Size">
+      <info>
+        <p>
+          <table>
+            <thead>
+              <tr>
+                <th>Size Name</th>
+                <th>Defined Name</th>
+                <th>Dimensions</th>
+                <th>Area</th>
+                <th>Ratio</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Tiny</td>
+                <td>TINY_MAP</td>
+                <td>120x120</td>
+                <td>14,400</td>
+                <td>1.4</td>
+              </tr>
+              <tr>
+                <td>Small</td>
+                <td>SMALL_MAP</td>
+                <td>144x144</td>
+                <td>20,736</td>
+                <td>2.1</td>
+              </tr>
+              <tr>
+                <td>Medium</td>
+                <td>MEDIUM_MAP</td>
+                <td>168x168</td>
+                <td>28,224</td>
+                <td>2.8</td>
+              </tr>
+              <tr>
+                <td>Normal</td>
+                <td>LARGE_MAP</td>
+                <td>200x200</td>
+                <td>40,000</td>
+                <td>4.0</td>
+              </tr>
+              <tr>
+                <td>Large</td>
+                <td>HUGE_MAP</td>
+                <td>220x220</td>
+                <td>48,400</td>
+                <td>4.8</td>
+              </tr>
+              <tr>
+                <td>Giant</td>
+                <td>GIGANTIC_MAP</td>
+                <td>240x240</td>
+                <td>57,600</td>
+                <td>5.8</td>
+              </tr>
+              <tr>
+                <td>Ludicrous</td>
+                <td>LUDIKRIS_MAP</td>
+                <td>480x480</td>
+                <td>230,400</td>
+                <td>23.0</td>
+              </tr>
+            </tbody>
+          </table>
+        </p>
+      </info>
+    </topic>
+
+    <!--
+    <topic id="game-settings" name="Reacting to Game Settings">
+      <info>
+        <p>
+          TODO
+        </p>
+      </info>
+    </topic>
+
+    <topic id="seasons-idiom" name="Seasonal Map Styling">
+      <info>
+        <p>
+          TODO
+        </p>
+      </info>
+    </topic>
+    -->
+
+    <topic id="broken-syntax" name="Broken/Unimplemented Syntax">
+      <info>
+        <p>
+          The following commands/attributes have strings present in the game
+          data, but do not seem to be implemented and are not used by the
+          built-in map scripts.
+        </p>
+        <script>
+          $(() => {
+            console.log("fixing broken syntax...")
+            $("#broken-syntax-list li").each(function (i, e) {
+              console.log("fixing: " + e.innerText)
+              e.setAttribute("data-local-id", e.innerText);
+              e.setAttribute("id", `broken-syntax--${e.innerText}`);
+            })
+          });
+        </script>
+        <ul id="broken-syntax-list">
+          <li>guard_state</li>
+          <li>min_distance</li>
+          <li>max_distance</li>
+          <li>set_position</li>
+          <li>percent_of_land</li>
+          <li>assign_to</li>
+          <li>base_layer</li>
+        </ul>
+      </info>
+    </topic>
+  </section>
+
+  <data id="appendix" name="Appendix">
+    <info>
+      <p>
+        While the data in this section is primarily intended to be read by
+        another program, it is presented in this formatted output for
+        your reference.
+      </p>
+    </info>
+    <record id="map-size-data" name="Map Sizes">
+      <info>
+        <p>
+          This data set contains a record for every possible map type, along
+          with the edge dimension (size), area, and scaling ratio for each type.
+        </p>
+        <p>
+          Note that the <arg-ref name="LARGE_MAP"/> constant is actually what the
+          game refers to as a "Normal" sized map and the <arg-ref name="HUGE_MAP"/>
+          constant refers to what the game calls a "Large" map.
+        </p>
+      </info>
+      <values>
+        <value>
+					<name>TINY_MAP</name>
+          <display-name players="2">Tiny</display-name>
+          <size>120</size>
+          <area>14400</area>
+          <scaling-factor>1.4</scaling-factor>
+        </value>
+
+        <value>
+					<name>SMALL_MAP</name>
+          <display-name players="3">Small</display-name>
+          <size>144</size>
+          <area>20736</area>
+          <scaling-factor>2.1</scaling-factor>
+        </value>
+
+        <value>
+					<name>MEDIUM_MAP</name>
+          <display-name players="4">Medium</display-name>
+          <size>168</size>
+          <area>28224</area>
+          <scaling-factor>2.8</scaling-factor>
+        </value>
+
+        <value>
+					<name>LARGE_MAP</name>
+          <display-name players="6">Normal</display-name>
+          <size>200</size>
+          <area>40000</area>
+          <scaling-factor>4.0</scaling-factor>
+        </value>
+
+        <value>
+					<name>HUGE_MAP</name>
+          <display-name players="8">Large</display-name>
+          <size>220</size>
+          <area>48400</area>
+          <scaling-factor>4.8</scaling-factor>
+        </value>
+
+        <value>
+					<name>GIGANTIC_MAP</name>
+          <display-name>Giant</display-name>
+          <size>240</size>
+          <area>57600</area>
+          <scaling-factor>5.8</scaling-factor>
+        </value>
+
+        <value>
+					<name>LUDIKRIS_MAP</name>
+          <display-name>Ludicrous</display-name>
+          <size>480</size>
+          <area>230400</area>
+          <scaling-factor>23.0</scaling-factor>
+        </value>
+      </values>
+    </record>
+
+    <record id="rms-tokens" name="RMS Tokens">
+      <info>
+        <p>
+          These tokens are taken from the strings file in AoE II: DE's game
+          data. Some, such as <doc-ref target="guard_state"/>, are syntax that
+          are functional in userpatch but do not seem to work in Definitive
+          Edition.
+        </p>
+      </info>
+      <values>
+        <value class="token token--macro" type="macro">#define</value>
+        <value class="token token--macro" type="macro">#undefine</value>
+        <value class="token token--macro" type="macro">#const</value>
+        <value class="token token--macro" type="macro">if</value>
+        <value class="token token--macro" type="macro">elseif</value>
+        <value class="token token--macro" type="macro">else</value>
+        <value class="token token--macro" type="macro">endif</value>
+        <value class="token token--macro" type="macro">start_random</value>
+        <value class="token token--macro" type="macro">percent_chance</value>
+        <value class="token token--macro" type="macro">end_random</value>
+        <value class="token token--macro" type="macro">#include</value>
+        <value class="token token--macro" type="macro">#include_drs</value>
+        <value class="token token--label" type="label"><![CDATA[<PLAYER_SETUP>]]></value>
+        <value class="token token--label" type="label"><![CDATA[<LAND_GENERATION>]]></value>
+        <value class="token token--label" type="label"><![CDATA[<CLIFF_GENERATION>]]></value>
+        <value class="token token--label" type="label"><![CDATA[<TERRAIN_GENERATION>]]></value>
+        <value class="token token--label" type="label"><![CDATA[<OBJECTS_GENERATION>]]></value>
+        <value class="token token--label" type="label"><![CDATA[<CONNECTION_GENERATION>]]></value>
+        <value class="token token--label" type="label"><![CDATA[<ELEVATION_GENERATION>]]></value>
+        <value class="token token--command" type="command">random_placement</value>
+        <value class="token token--command" type="command">grouped_by_team</value>
+        <value class="token token--command" type="command">nomad_resources</value>
+        <value class="token token--command" type="command">ai_info_map_type</value>
+        <value class="token token--command" type="command">create_player_lands</value>
+        <value class="token token--command" type="command">create_land</value>
+        <value class="token token--command" type="command">enable_waves</value>
+        <value class="token token--command" type="command">color_correction</value>
+        <value class="token token--command" type="command">create_terrain</value>
+        <value class="token token--command" type="command">create_elevation</value>
+        <value class="token token--command" type="command">min_number_of_cliffs</value>
+        <value class="token token--command" type="command">max_number_of_cliffs</value>
+        <value class="token token--command" type="command">min_length_of_cliff</value>
+        <value class="token token--command" type="command">max_length_of_cliff</value>
+        <value class="token token--command" type="command">cliff_curliness</value>
+        <value class="token token--command" type="command">min_distance_cliffs</value>
+        <value class="token token--command" type="command">min_terrain_distance</value>
+        <value class="token token--command" type="command">create_object</value>
+        <value class="token token--command" type="command">create_connect_all_players_land</value>
+        <value class="token token--command" type="command">create_connect_teams_lands</value>
+        <value class="token token--command" type="command">create_connect_same_land_zones</value>
+        <value class="token token--command" type="command">create_connect_all_lands</value>
+        <value class="token token--command" type="command">create_connect_to_nonplayer_land</value>
+        <value class="token token--command" type="command">guard_state</value>
+
+        <!-- base_terrain is both a command and attribute -->
+        <value class="token token--command" type="command">base_terrain</value>>
+        <value class="token token--attribute" type="attribute">base_terrain</value>
+
+        <value class="token token--attribute" type="attribute">min_distance</value>
+        <value class="token token--attribute" type="attribute">max_distance</value>
+        <value class="token token--attribute" type="attribute">set_position</value>
+        <value class="token token--attribute" type="attribute">land_percent</value>
+        <value class="token token--attribute" type="attribute">terrain_type</value>
+        <value class="token token--attribute" type="attribute">base_size</value>
+        <value class="token token--attribute" type="attribute">left_border</value>
+        <value class="token token--attribute" type="attribute">right_border</value>
+        <value class="token token--attribute" type="attribute">top_border</value>
+        <value class="token token--attribute" type="attribute">bottom_border</value>
+        <value class="token token--attribute" type="attribute">border_fuzziness</value>
+        <value class="token token--attribute" type="attribute">zone</value>
+        <value class="token token--attribute" type="attribute">set_zone_by_team</value>
+        <value class="token token--attribute" type="attribute">set_zone_randomly</value>
+        <value class="token token--attribute" type="attribute">other_zone_avoidance_distance</value>
+        <value class="token token--attribute" type="attribute">assign_to_player</value>
+        <value class="token token--attribute" type="attribute">percent_of_land</value>
+        <value class="token token--attribute" type="attribute">number_of_clumps</value>
+        <value class="token token--attribute" type="attribute">spacing_to_other_terrain_types</value>
+        <value class="token token--attribute" type="attribute">set_scaling_to_map_size</value>
+        <value class="token token--attribute" type="attribute">number_of_groups</value>
+        <value class="token token--attribute" type="attribute">number_of_objects</value>
+        <value class="token token--attribute" type="attribute">group_variance</value>
+        <value class="token token--attribute" type="attribute">group_placement_radius</value>
+        <value class="token token--attribute" type="attribute">set_loose_grouping</value>
+        <value class="token token--attribute" type="attribute">set_tight_grouping</value>
+        <value class="token token--attribute" type="attribute">terrain_to_place_on</value>
+        <value class="token token--attribute" type="attribute">set_gaia_object_only</value>
+        <value class="token token--attribute" type="attribute">set_place_for_every_player</value>
+        <value class="token token--attribute" type="attribute">place_on_specific_land_id</value>
+        <value class="token token--attribute" type="attribute">min_distance_to_players</value>
+        <value class="token token--attribute" type="attribute">max_distance_to_players</value>
+        <value class="token token--attribute" type="attribute">land_position</value>
+        <value class="token token--attribute" type="attribute">land_id</value>
+        <value class="token token--attribute" type="attribute">clumping_factor</value>
+        <value class="token token--attribute" type="attribute">number_of_tiles</value>
+        <value class="token token--attribute" type="attribute">set_scale_by_groups</value>
+        <value class="token token--attribute" type="attribute">set_scale_by_size</value>
+        <value class="token token--attribute" type="attribute">set_avoid_player_start_areas</value>
+        <value class="token token--attribute" type="attribute">min_distance_group_placement</value>
+        <value class="token token--attribute" type="attribute">spacing</value>
+        <value class="token token--attribute" type="attribute">default_terrain_replacement</value>
+        <value class="token token--attribute" type="attribute">replace_terrain</value>
+        <value class="token token--attribute" type="attribute">terrain_cost</value>
+        <value class="token token--attribute" type="attribute">terrain_size</value>
+        <value class="token token--attribute" type="attribute">min_placement_distance</value>
+        <value class="token token--attribute" type="attribute">set_scaling_to_player_number</value>
+        <value class="token token--attribute" type="attribute">height_limits</value>
+        <value class="token token--attribute" type="attribute">set_flat_terrain_only</value>
+        <value class="token token--attribute" type="attribute">max_distance_to_other_zones</value>
+        <value class="token token--attribute" type="attribute">temp_min_distance_group_placement</value>
+        <value class="token token--attribute" type="attribute">base_elevation</value>
+        <value class="token token--attribute" type="attribute">direct_placement</value>
+        <value class="token token--attribute" type="attribute">resource_delta</value>
+        <value class="token token--attribute" type="attribute">assign_to</value>
+        <value class="token token--attribute" type="attribute">terrain_mask</value>
+        <value class="token token--attribute" type="attribute">circle_radius</value>
+        <value class="token token--attribute" type="attribute">base_layer</value>
+        <value class="token token--attribute" type="attribute">place_on_forest_zone</value>
+        <value class="token token--attribute" type="attribute">avoid_forest_zone</value>
+        <value class="token token--attribute" type="attribute">find_closest</value>
+        <value class="token token--attribute" type="attribute">actor_area</value>
+        <value class="token token--attribute" type="attribute">actor_area_radius</value>
+        <value class="token token--attribute" type="attribute">actor_area_to_place_in</value>
+        <value class="token token--attribute" type="attribute">avoid_actor_area</value>
+        <value class="token token--attribute" type="attribute">avoid_all_actor_areas</value>
+        <value class="token token--attribute" type="attribute">layer_to_place_on</value>
+        <value class="token token--attribute" type="attribute">force_placement</value>
+        <value class="token token--attribute" type="attribute">second_object</value>
+
+
+        <value class="token token--macro" type="macro">rnd(</value>
+        <value class="token token--macro" type="macro">)</value>
+        <value class="token token--macro" type="macro">,</value>
+        <value class="token token--begin_comment" type="begin_comment">/*</value>
+        <value class="token token--end_comment" type="end_comment">*/</value>
+        <value class="token token--braces" type="braces">{</value>
+        <value class="token token--braces" type="braces">}</value>
+
+        <value class="token token--definition" type="definition">TINY_MAP</value>
+        <value class="token token--definition" type="definition">SMALL_MAP</value>
+        <value class="token token--definition" type="definition">MEDIUM_MAP</value>
+        <value class="token token--definition" type="definition">LARGE_MAP</value>
+        <value class="token token--definition" type="definition">HUGE_MAP</value>
+        <value class="token token--definition" type="definition">GIGANTIC_MAP</value>
+        <value class="token token--definition" type="definition">LUDIKRIS_MAP</value>
+        <value class="token token--definition" type="definition">FIXED_POSITIONS</value>
+        <value class="token token--definition" type="definition">DEATH_MATCH</value>
+        <value class="token token--definition" type="definition">HIGH_RESOURCES</value>
+        <value class="token token--definition" type="definition">MEDIUM_RESOURCES</value>
+        <value class="token token--definition" type="definition">LOW_RESOURCES</value>
+        <value class="token token--definition" type="definition">DEFAULT_RESOURCES</value>
+        <value class="token token--definition" type="definition">REGICIDE</value>
+        <value class="token token--definition" type="definition">CAPTURE_THE_RELIC</value>
+        <value class="token token--definition" type="definition">BATTLE_ROYALE</value>
+        <value class="token token--definition" type="definition">EMPIRE_WARS</value>
+        <value class="token token--definition" type="definition">KING_OT_HILL</value>
+        <value class="token token--definition" type="definition">WONDER_RACE</value>
+        <value class="token token--definition" type="definition">DEFEND_WONDER</value>
+        <value class="token token--definition" type="definition">TURBO_RANDOM_MAP</value>
+        <value class="token token--definition" type="definition">TURBO_MODE</value>
+        <value class="token token--definition" type="definition">TEAM_POSITIONS</value>
+        <value class="token token--definition" type="definition">INFINITE_RESOURCES</value>
+        <value class="token token--definition" type="definition">RANDOM_RESOURCES</value>
+        <value class="token token--definition" type="definition">FULL_TECH_TREE</value>
+        <value class="token token--definition" type="definition">AI_PLAYERS</value>
+        <value class="token token--definition" type="definition">DE_AVAILABLE</value>
+        <value class="token token--definition" type="definition">1_PLAYER_GAME</value>
+        <value class="token token--definition" type="definition">2_PLAYER_GAME</value>
+        <value class="token token--definition" type="definition">3_PLAYER_GAME</value>
+        <value class="token token--definition" type="definition">4_PLAYER_GAME</value>
+        <value class="token token--definition" type="definition">5_PLAYER_GAME</value>
+        <value class="token token--definition" type="definition">6_PLAYER_GAME</value>
+        <value class="token token--definition" type="definition">7_PLAYER_GAME</value>
+        <value class="token token--definition" type="definition">8_PLAYER_GAME</value>
+      </values>
+    </record>
+  </data>
+</lang>
