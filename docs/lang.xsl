@@ -134,6 +134,7 @@
         <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:400,700|Roboto:400,400i,700,700i&amp;display=swap" rel="stylesheet"/>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
         <link rel="stylesheet" type="text/css" href="style/lang.xsl.css"/>
+
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
         <script src="js/lang.xsl.js" type="module"></script>
       </head>
