@@ -2025,6 +2025,7 @@
         <value class="token token--attribute" type="attribute">layer_to_place_on</value>
         <value class="token token--attribute" type="attribute">force_placement</value>
         <value class="token token--attribute" type="attribute">second_object</value>
+        <value class="token token--attribute" type="attribute">avoid_cliff_zone</value>
 
 
         <value class="token token--macro" type="macro">rnd(</value>
