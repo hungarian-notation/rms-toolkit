@@ -266,8 +266,8 @@
       <h4>
         <xsl:value-of select="$displayName"/>
       </h4>
-      <xsl:call-template name="notes"/>
       <xsl:call-template name="details"/>
+      <xsl:call-template name="notes"/>
       <xsl:call-template name="exclusive"/>
     </div>
   </xsl:template>
@@ -295,8 +295,8 @@
       <h4>
         <xsl:value-of select="$displayName"/>
       </h4>
-      <xsl:call-template name="notes"/>
       <xsl:call-template name="details"/>
+      <xsl:call-template name="notes"/>
       <xsl:call-template name="exclusive"/>
 
       <ul>
@@ -354,9 +354,9 @@
         <code><xsl:value-of select="./name"/></code>
       </h4>
 
-      <xsl:call-template name="notes"/>
       <xsl:call-template name="arguments"/>
       <xsl:call-template name="details"/>
+      <xsl:call-template name="notes"/>
       <xsl:call-template name="exclusive"/>
     </div>
   </xsl:template>
@@ -403,9 +403,9 @@
         <xsl:copy-of select="$syntax-params"/>
       </h4>
 
-      <xsl:call-template name="notes"/>
       <xsl:call-template name="arguments"/>
       <xsl:call-template name="details"/>
+      <xsl:call-template name="notes"/>
       <xsl:call-template name="exclusive"/>
 
     </div>
@@ -472,6 +472,9 @@
           <xsl:choose>
             <xsl:when test="$note-type='new'">
               New in AoE II: DE
+            </xsl:when>
+            <xsl:when test="$note-type='undocumented'">
+              This feature is not listed in official documentation.
             </xsl:when>
             <xsl:otherwise>
               <xsl:value-of select="."/>

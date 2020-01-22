@@ -711,6 +711,7 @@
       </argument>
     </syntax>
 
+    <!--
     <syntax type="attribute">
       <name>circle_placement</name>
       <info>
@@ -727,19 +728,38 @@
       </info>
       <note class="new"/>
     </syntax>
+    -->
 
     <syntax type="attribute">
       <name>circle_radius</name>
       <note class="new"/>
       <argument>
-        <name>%</name>
+        <name>RADIUS</name>
+        <type name="Integer" domain="Percent Radius" min="0" max="50"/>
+        <default>40</default>
+      </argument>
+      <argument>
+        <name>VARIANCE</name>
         <type name="Integer" domain="Percent Radius" min="0" max="50"/>
         <default>0</default>
         <info>
-          <p>Represents the distance from the center to player lands placed with
-            <doc-ref target="circle_placement"/>.</p>
+          <p>
+            When set, the radius at which players are placed can vary by this
+            amount.
+          </p>
         </info>
       </argument>
+      <info>
+        <p>
+          When used in <doc-ref target="create_player_lands"/>, positions
+          the players in a circle with the given radius.
+        </p>
+        <p>
+          Contrary to documentation posted to the Forgotten Realms website,
+          the <doc-ref target="circle_placement"/> attribute is not implemented
+          and is not needed.
+        </p>
+      </info>
     </syntax>
   </syntax-group>
 
@@ -972,6 +992,44 @@
           <p>Defines the terrain type that this terrain should replace.</p>
         </info>
       </argument>
+      <exclude target="base_layer"/>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>base_layer</name>
+      <argument>
+        <name>TYPE</name>
+        <type name="Constant" domain="Terrain"/>
+      </argument>
+      <info>
+        <p>
+          Defines the <strong>masking terrain</strong> type that this terrain
+          should replace.
+        </p>
+        <p>
+          In this example, a portion of the terrain masked with SNOW by the
+          first command is replaced with DESERT.
+        </p>
+        <code-block>
+          create_terrain  SNOW
+          {
+            base_terrain  GRASS
+            land_percent  50
+            terrain_mask  1
+          }
+
+          create_terrain  DESERT
+          {
+            base_layer    SNOW
+            land_percent  30
+          }
+        </code-block>
+      </info>
+      <note class="attribution">
+        This entry is based on research done by Zetnus.
+      </note>
+      <note class='undocumented'/>
+      <exclude target="base_terrain"/>
     </syntax>
 
     <syntax type="attribute">
@@ -1120,6 +1178,7 @@
           <doc-ref target="create_connect_all_lands"/>.
         </p>
       </info>
+      <note class="undocumented"/>
     </syntax>
 
     <syntax type="command">
@@ -1134,6 +1193,8 @@
         creation of a spoked hub.
       </info>
       <note class='new'/>
+      <note class='critical'>This command is currently bugged. It blocks
+        any other connections from being created.</note>
     </syntax>
 
     <syntax type="attribute">
@@ -1433,7 +1494,6 @@
 
     <syntax type="attribute">
       <name>place_on_specific_land_id</name>
-      <note class='new'/>
       <argument>
         <name>LAND_ID</name>
         <type name="Integer" domain="Land ID"/>
@@ -1450,8 +1510,8 @@
       <name>resource_delta</name>
       <note class='new'/>
       <argument>
-        <name>+-AMOUNT</name>
-        <type name="Integer" domain="with Sign"/>
+        <name>AMOUNT</name>
+        <type name="Integer"/>
       </argument>
       <info>
         <p>
@@ -1463,6 +1523,7 @@
     <syntax type="attribute">
       <name>second_object</name>
       <note class='new'/>
+      <note class='undocumented'/>
       <argument>
         <name>TYPE</name>
         <type name="Constant" domain="Object"/>
@@ -1473,11 +1534,6 @@
         </p>
         <p>
           This has some limited use in composing eye candy objects, but is otherwise mostly useless.
-        </p>
-        <p>
-          This new attribute was announced and documented on the
-          <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
-            Forgotten Empires website</a>.
         </p>
       </info>
     </syntax>
@@ -1496,12 +1552,35 @@
 
     <syntax type="attribute">
       <name>avoid_forest_zone</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Tiles"/>
+      </argument>
       <note class='new'/>
       <info>
+        <p>
+          Objects will be placed at least <arg-ref index="1"/> tiles away
+          from a forest zone.
+        </p>
         <p>
           This new attribute was announced and documented on the
           <a target="_blank" href="https://www.forgottenempires.net/age-of-empires-ii-definitive-edition/rms-features">
             Forgotten Empires website</a>.
+        </p>
+      </info>
+    </syntax>
+
+    <syntax type="attribute">
+      <name>avoid_cliff_zone</name>
+      <argument>
+        <name>N</name>
+        <type name="Integer" domain="Tiles"/>
+      </argument>
+      <note class='new'/>
+      <info>
+        <p>
+          Objects will be placed at least <arg-ref index="1"/> tiles away
+          from a cliff zone.
         </p>
       </info>
     </syntax>
@@ -1735,7 +1814,6 @@
           <li>set_position</li>
           <li>percent_of_land</li>
           <li>assign_to</li>
-          <li>base_layer</li>
         </ul>
       </info>
     </topic>
@@ -1985,6 +2063,7 @@
         <value class="token token--definition" type="definition">FULL_TECH_TREE</value>
         <value class="token token--definition" type="definition">AI_PLAYERS</value>
         <value class="token token--definition" type="definition">DE_AVAILABLE</value>
+
         <value class="token token--definition" type="definition">1_PLAYER_GAME</value>
         <value class="token token--definition" type="definition">2_PLAYER_GAME</value>
         <value class="token token--definition" type="definition">3_PLAYER_GAME</value>
@@ -1993,6 +2072,110 @@
         <value class="token token--definition" type="definition">6_PLAYER_GAME</value>
         <value class="token token--definition" type="definition">7_PLAYER_GAME</value>
         <value class="token token--definition" type="definition">8_PLAYER_GAME</value>
+
+        <value class="token token--definition" type="definition">0_TEAM_GAME</value>
+        <value class="token token--definition" type="definition">1_TEAM_GAME</value>
+        <value class="token token--definition" type="definition">2_TEAM_GAME</value>
+        <value class="token token--definition" type="definition">3_TEAM_GAME</value>
+        <value class="token token--definition" type="definition">4_TEAM_GAME</value>
+
+        <value class="token token--definition" type="definition">PLAYER1_TEAM0</value>
+        <value class="token token--definition" type="definition">PLAYER1_TEAM1</value>
+        <value class="token token--definition" type="definition">PLAYER1_TEAM2</value>
+        <value class="token token--definition" type="definition">PLAYER1_TEAM3</value>
+        <value class="token token--definition" type="definition">PLAYER1_TEAM4</value>
+
+        <value class="token token--definition" type="definition">PLAYER2_TEAM0</value>
+        <value class="token token--definition" type="definition">PLAYER2_TEAM1</value>
+        <value class="token token--definition" type="definition">PLAYER2_TEAM2</value>
+        <value class="token token--definition" type="definition">PLAYER2_TEAM3</value>
+        <value class="token token--definition" type="definition">PLAYER2_TEAM4</value>
+
+        <value class="token token--definition" type="definition">PLAYER3_TEAM0</value>
+        <value class="token token--definition" type="definition">PLAYER3_TEAM1</value>
+        <value class="token token--definition" type="definition">PLAYER3_TEAM2</value>
+        <value class="token token--definition" type="definition">PLAYER3_TEAM3</value>
+        <value class="token token--definition" type="definition">PLAYER3_TEAM4</value>
+
+        <value class="token token--definition" type="definition">PLAYER4_TEAM0</value>
+        <value class="token token--definition" type="definition">PLAYER4_TEAM1</value>
+        <value class="token token--definition" type="definition">PLAYER4_TEAM2</value>
+        <value class="token token--definition" type="definition">PLAYER4_TEAM3</value>
+        <value class="token token--definition" type="definition">PLAYER4_TEAM4</value>
+
+        <value class="token token--definition" type="definition">PLAYER5_TEAM0</value>
+        <value class="token token--definition" type="definition">PLAYER5_TEAM1</value>
+        <value class="token token--definition" type="definition">PLAYER5_TEAM2</value>
+        <value class="token token--definition" type="definition">PLAYER5_TEAM3</value>
+        <value class="token token--definition" type="definition">PLAYER5_TEAM4</value>
+
+        <value class="token token--definition" type="definition">PLAYER6_TEAM0</value>
+        <value class="token token--definition" type="definition">PLAYER6_TEAM1</value>
+        <value class="token token--definition" type="definition">PLAYER6_TEAM2</value>
+        <value class="token token--definition" type="definition">PLAYER6_TEAM3</value>
+        <value class="token token--definition" type="definition">PLAYER6_TEAM4</value>
+
+        <value class="token token--definition" type="definition">PLAYER7_TEAM0</value>
+        <value class="token token--definition" type="definition">PLAYER7_TEAM1</value>
+        <value class="token token--definition" type="definition">PLAYER7_TEAM2</value>
+        <value class="token token--definition" type="definition">PLAYER7_TEAM3</value>
+        <value class="token token--definition" type="definition">PLAYER7_TEAM4</value>
+
+        <value class="token token--definition" type="definition">PLAYER8_TEAM0</value>
+        <value class="token token--definition" type="definition">PLAYER8_TEAM1</value>
+        <value class="token token--definition" type="definition">PLAYER8_TEAM2</value>
+        <value class="token token--definition" type="definition">PLAYER8_TEAM3</value>
+        <value class="token token--definition" type="definition">PLAYER8_TEAM4</value>
+
+        <value class="token token--definition" type="definition">TEAM0_SIZE0</value>
+        <value class="token token--definition" type="definition">TEAM0_SIZE1</value>
+        <value class="token token--definition" type="definition">TEAM0_SIZE2</value>
+        <value class="token token--definition" type="definition">TEAM0_SIZE3</value>
+        <value class="token token--definition" type="definition">TEAM0_SIZE4</value>
+        <value class="token token--definition" type="definition">TEAM0_SIZE5</value>
+        <value class="token token--definition" type="definition">TEAM0_SIZE6</value>
+        <value class="token token--definition" type="definition">TEAM0_SIZE7</value>
+        <value class="token token--definition" type="definition">TEAM0_SIZE8</value>
+
+        <value class="token token--definition" type="definition">TEAM1_SIZE0</value>
+        <value class="token token--definition" type="definition">TEAM1_SIZE1</value>
+        <value class="token token--definition" type="definition">TEAM1_SIZE2</value>
+        <value class="token token--definition" type="definition">TEAM1_SIZE3</value>
+        <value class="token token--definition" type="definition">TEAM1_SIZE4</value>
+        <value class="token token--definition" type="definition">TEAM1_SIZE5</value>
+        <value class="token token--definition" type="definition">TEAM1_SIZE6</value>
+        <value class="token token--definition" type="definition">TEAM1_SIZE7</value>
+        <value class="token token--definition" type="definition">TEAM1_SIZE8</value>
+
+        <value class="token token--definition" type="definition">TEAM2_SIZE0</value>
+        <value class="token token--definition" type="definition">TEAM2_SIZE1</value>
+        <value class="token token--definition" type="definition">TEAM2_SIZE2</value>
+        <value class="token token--definition" type="definition">TEAM2_SIZE3</value>
+        <value class="token token--definition" type="definition">TEAM2_SIZE4</value>
+        <value class="token token--definition" type="definition">TEAM2_SIZE5</value>
+        <value class="token token--definition" type="definition">TEAM2_SIZE6</value>
+        <value class="token token--definition" type="definition">TEAM2_SIZE7</value>
+        <value class="token token--definition" type="definition">TEAM2_SIZE8</value>
+
+        <value class="token token--definition" type="definition">TEAM3_SIZE0</value>
+        <value class="token token--definition" type="definition">TEAM3_SIZE1</value>
+        <value class="token token--definition" type="definition">TEAM3_SIZE2</value>
+        <value class="token token--definition" type="definition">TEAM3_SIZE3</value>
+        <value class="token token--definition" type="definition">TEAM3_SIZE4</value>
+        <value class="token token--definition" type="definition">TEAM3_SIZE5</value>
+        <value class="token token--definition" type="definition">TEAM3_SIZE6</value>
+        <value class="token token--definition" type="definition">TEAM3_SIZE7</value>
+        <value class="token token--definition" type="definition">TEAM3_SIZE8</value>
+
+        <value class="token token--definition" type="definition">TEAM4_SIZE0</value>
+        <value class="token token--definition" type="definition">TEAM4_SIZE1</value>
+        <value class="token token--definition" type="definition">TEAM4_SIZE2</value>
+        <value class="token token--definition" type="definition">TEAM4_SIZE3</value>
+        <value class="token token--definition" type="definition">TEAM4_SIZE4</value>
+        <value class="token token--definition" type="definition">TEAM4_SIZE5</value>
+        <value class="token token--definition" type="definition">TEAM4_SIZE6</value>
+        <value class="token token--definition" type="definition">TEAM4_SIZE7</value>
+        <value class="token token--definition" type="definition">TEAM4_SIZE8</value>
       </values>
     </record>
   </data>

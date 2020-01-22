@@ -338,6 +338,22 @@ td {
   content: "new_releases";
 }
 
+.syntax-note.syntax-note--attribution {
+  color: #080;
+}
+
+.syntax-note.syntax-note--attribution p::before {
+  content: "emoji_people";
+}
+
+.syntax-note.syntax-note--undocumented {
+  color: #880;
+}
+
+.syntax-note.syntax-note--undocumented p::before {
+  content: "live_help";
+}
+
 .syntax-note {
   position: relative;
 }
