@@ -118,6 +118,14 @@
   <value type="attribute">layer_to_place_on</value>
   <value type="attribute">force_placement</value>
   <value type="attribute">second_object</value>
+
+  <value type="attribute">avoid_cliff_zone</value>
+  <value type="attribute">set_gaia_unconvertible</value>
+  <value type="attribute">set_gaia_civilization</value>
+  <value type="attribute">enable_balanced_elevation</value>
+  <value type="attribute">effect_amount</value>
+  <value type="attribute">behavior_version</value>
+
 	<value type="definition">TINY_MAP</value>
 	<value type="definition">SMALL_MAP</value>
 	<value type="definition">MEDIUM_MAP</value>
